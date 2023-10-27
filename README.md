@@ -1,8 +1,11 @@
 # Dye_et_al_2023_rockling
 R script to statistically analyze (i.e. reproduce results from Dye et al. 2023) the compartmental usage of the five bearded rockling within an experimental water temperature preference chamber.
+1. 
 
-Dye et al. 2023 abstract - 
-Changes in the environment can alter the suitability of habitats for organisms. In marine systems, fish species
+## Dye et al. 2023 publication 
+A rockling’s choice: the trade-off between thermal preference and physical structure in the five bearded rockling, _Ciliata mustela_.
+- Abstract
+> Changes in the environment can alter the suitability of habitats for organisms. In marine systems, fish species
 have their own specific requirements in terms of temperature and other habitat features. Behavioral responses
 such as thermoregulatory behavior in ectothermic species allow mobile organisms to respond to detrimental
 changes and search for more suitable habitats. However, for many species, limited information exists on the ecological
