@@ -1,11 +1,14 @@
 # Bass Dye, created: 30/05/2023, last revision: 05/06/2023
+
+# PLEASE SEE https://github.com/bassdye/pcTEMP for the optimized version of the following R script 
+
 # Code to 1) read in rockling experimental shelter removal data from csv file 
 # 2) Statistically analyze the data:
 # test for non random use of chamber, 
 # MANOVA - test for differences between compartment usage during shelter removal (observational phases),
-# rank (most preferred to least preferred) temperature compartments
-# statistical test rankings.
-# 1) Test 10 and 13 shelter separately 2) Test 16, 22, final observation together
+# rank (most preferred to least preferred) temperature compartments,
+# statistically test rankings.
+# 1) Test 10*C and 13*C shelter separately 2) Test 16*C, 22*C, final observation together
 # Code based off of Aebischer et al. 1993 and Schram et al. 2013 to analyse data from the preference chamber experiments.
 # Fish acclimated to 16°C were exposed to a temperature range of 10-13-16-19-22°C. 
 # dependent variables (measured): count of individual fish in each preference chamber compartment 
@@ -36,10 +39,10 @@ library("tidyverse")
 library("here")
 library("ggpubr")
 
-# Read in data
-# dat <- read.table('rockling_shelter_removal_10.csv', header=TRUE, sep=",");
-# dat <- read.table('rockling_shelter_removal_13.csv', header=TRUE, sep=",");
-dat <- read.table('rockling_shelter_removal_16_end.csv', header=TRUE, sep=",");
+# Read in data; select dat file for specific physical structure removal (i.e. removal_10 refers to 10*C structures removed)
+# dat <- read.table('rockling_shelter_removal_10.csv', header = TRUE, sep = ",");
+# dat <- read.table('rockling_shelter_removal_13.csv', header = TRUE, sep = ",");
+dat <- read.table('rockling_shelter_removal_16_end.csv', header = TRUE, sep = ",");
 #View(dat)
 
 # Step 2: transform data of raw counts per compartment to proportions per temperature zone 
@@ -92,16 +95,14 @@ prop_dat$C3 <- expdat$z2 + expdat$z6;
 prop_dat$C4 <- expdat$z1 + expdat$z7;
 prop_dat$C5 <- expdat$z8;
 
-# Zero inflated data
-#Plot number of zeros in data to show zero inflation
-#library(dplyr)
-#temp2 <- expdat[,5:12]
-#temp2 <- data.frame(value=unlist(temp2, use.names = FALSE))
-#count_zero <- temp2[temp2 == 0] 
-#percent_zero <- length(count_zero) / nrow(temp2)
-#h <- hist(temp2$value, main = "Zero inflated data: 56% = 0 ", xlab = "Percent compartment use",
-#breaks = c(0,seq(0.01,1.0,.01)))
-#h
+# Check for zero inflated data
+# Plot number of zeros in data to show zero inflation
+# temp2 <- expdat[,5:12]
+# temp2 <- data.frame(value=unlist(temp2, use.names = FALSE))
+# count_zero <- temp2[temp2 == 0]
+# percent_zero <- length(count_zero) / nrow(temp2); percent_zero * 100
+# hist(temp2$value, main = "Zero inflated data", xlab = "Percent compartment use",
+#           breaks = c(0,seq(0.01,1.0,.01)))
 
 # Find and replace zero numerator or denominator with small value
 # As a zero numerator or denominator in the log-ratio transformation is invalid, a small positive value, 
@@ -135,69 +136,17 @@ prop_dat$LRA2 <- prop_dat$LR2 - log(1); # 1 = (1/4)/(1/4)
 prop_dat$LRA3 <- prop_dat$LR3 - log(1);
 prop_dat$LRA4 <- prop_dat$LR4 - log(0.5);
 
-# Step 5: assess evidence of non-random usage (i.e. preference) during the three observational phases: ####
-# 5c: The matrix of log-ratios may also be analysed using MANOVA, for example to assess
-# evidence of treatment effects:
-# MANOVA tests for temperature preference experiments
-
-# Test for difference between phases ####
-# Select which experimental phase you would like to test (non-gradient - (I), acute - (II), final - (III))
-data_phase <- as_tibble(prop_dat)
-
-# data_phase <- as_tibble(prop_dat) %>% 
-#   filter(phase != "I") 
-# Conduct MANOVA although multivariate normality assumption is not met
-#summary(manova(cbind(LRA1, LRA2, LRA3, LRA4) ~ treatment +  Error(factor(subject) / treatment), data = data_phase))
-summary(manova(cbind(LRA1, LRA2, LRA3, LRA4) ~ phase, data = data_phase))
-
-# Conduct Permutation test so we can ignore MANOVA assumptions 
-# Produce the same values by setting the seed
-set.seed(1234)
-# Define number of permutations
-nperm <- 5000
-# Allocate storage (i.e. vector with NAs to be replaced by permutation results)
-# Here we want 5000 + 1 for our observed stat
-res <- rep(NA, nperm + 1)
-
-for(i in seq(along = res[-1])) {
-  # First create matrix containing log-ratios of usage (corrected for the availability of temperature zones)
-  # from the selected phase on line 10
-  data_to_shuffle <- cbind(data_phase$LRA1, data_phase$LRA2, data_phase$LRA3, data_phase$LRA4) 
-  # Then shuffle (randomly rearrange) the matrix for use in the MANOVA
-  shuffled <- data_to_shuffle[sample(1:nrow(data_to_shuffle)), ]
-  # Here we replace the ith value in the vector res with the shuffled data MANOVA result
-  tmp <- summary(manova(shuffled ~ data_phase$phase), test = "Wilks")
-  # Get Wilks value (test statistic) from MANOVA summary
-  res[i] <- tmp[["stats"]][1, 2]
-  # Remove variables for next iteration
-  rm("tmp", "shuffled")
-}
-# Now we append the observed stat onto the end of the result vector res
-# We also store this in 'obs' for convenience
-tmp <- summary(manova(cbind(LRA1, LRA2, LRA3, LRA4) ~ phase, data = data_phase),
-               test = "Wilks")
-res[nperm+1] <- obs <- tmp[["stats"]][1, 2]
-
-# This is the permutation p-value - the proportion of the nperm
-# permutations + 1 that are greater than or equal to the observed stat 'obs'
-# perm_p_value <- sum(res <= obs) / (nperm+1); perm_p_value
-# obs_p_value <- tmp[["Error: factor(subject):treatment"]][["stats"]][1,6]; obs_p_value
-perm_p_value <- 2 * (min(sum(res <= obs), sum(res >= obs)) / (nperm+1)); perm_p_value # 2 tailed
-obs_p_value <- tmp[["stats"]][1, 6]; obs_p_value
-
-# Plot histogram of permutation and observed (blue line) results 
-hist(res)
-abline(v = obs, col = "blue")
-
 # Clean up environment
 rm(list=setdiff(ls(), "prop_dat"))
 
-# Step 6: Once overall evidence of non-random use has been assessed, the next step is to rank compartments from least to most preferred ####
+# Step 5: Rank compartments from least to most preferred ####
 # This can be done by computing a cross-table with pairwise differences between matching log-ratios of usage 
 # and availability of temperature zones, and counting the number of times a particular temperature zone
 # has been observed to be preferred over other temperature zones (e.g. see table 1 in Aebischer et al. 1993)
 
-# Subset for non-gradient, acute, or final proportions; choose (I,II,III) accordingly 
+# Subset for phase accordingly based on dat files:
+# for removal_10(13) set phase == "I"
+# for removal_16_end, phase == "II" is 16*C structure removal, "III" is 19*C structure removal, "IV" only structure remaining in 22*C
 exp_data <- subset(prop_dat, phase == "IV")
 
 # Proportion of available space per compartment and temperature 
@@ -285,7 +234,6 @@ shapiro.test(test_norm_se)
 
 # Test significance between compartments ####
 # Subset of non-gradient, acute, or final proportions; choose (I,II,III) accordingly
-#rank_data <- subset(prop_dat, phase == "I" & treatment == "5") 
 rank_data <- exp_data # Same subset as line 255 to reduce any potential mistakes
 
 # Clear space in environment

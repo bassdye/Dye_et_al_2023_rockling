@@ -1,10 +1,13 @@
 # Bass Dye, created: 30/05/2023, last revision: 05/06/2023
-# Code to 1) read in rockling experimental  data from csv file 
+
+# PLEASE SEE https://github.com/bassdye/pcTEMP for the optimized version of the following R script 
+
+# Code to 1) read in rockling experimental data from csv file 
 # 2) Statistically analyze the data:
-  # test for non random use of chamber, 
-  # ANOVA - test for differences in compartment usage observational phases,
-  # rank (most preferred to least preferred) temperature compartments
-  # statistical test rankings.
+  # test for non random use of chamber,
+  # MANOVA - test for differences in compartment usage observational phases,
+  # rank (most preferred to least preferred) temperature compartments,
+  # statistically test rankings.
 # Code based off of Aebischer et al. 1993 and Schram et al. 2013 to analyse data from the preference chamber experiments.
 # Fish acclimated to 16°C were exposed to a temperature range of 10-13-16-19-22°C. 
   # dependent variables (measured): count of individual fish in each preference chamber compartment 
@@ -28,15 +31,17 @@ if(!require(fs)) install.packages("fs")
 if(!require(tidyverse))install.packages("tidyverse")
 if(!require(here))install.packages("here")
 if(!require(ggpubr))install.packages("ggpubr")
+if(!require(ggpubr))install.packages("dplyr")
 
 # Load packages
 library("fs")
 library("tidyverse")
 library("here")
 library("ggpubr")
+library("dplyr")
 
 # Read in data
-dat <- read.table('rockling_temp_preference_data.csv', header=TRUE, sep=",");
+dat <- read.table('rockling_temp_preference_data.csv', header = TRUE, sep = ",");
 #View(dat)
 
 # Step 2: transform data of raw counts per compartment to proportions per temperature zone 
@@ -89,16 +94,15 @@ prop_dat$C3 <- expdat$z2 + expdat$z6;
 prop_dat$C4 <- expdat$z1 + expdat$z7;
 prop_dat$C5 <- expdat$z8;
 
-# Zero inflated data
-#Plot number of zeros in data to show zero inflation
-#library(dplyr)
-#temp2 <- expdat[,5:12]
-#temp2 <- data.frame(value=unlist(temp2, use.names = FALSE))
-#count_zero <- temp2[temp2 == 0] 
-#percent_zero <- length(count_zero) / nrow(temp2)
-#h <- hist(temp2$value, main = "Zero inflated data: 56% = 0 ", xlab = "Percent compartment use",
-#breaks = c(0,seq(0.01,1.0,.01)))
-#h
+# Check for zero inflated data
+# Plot number of zeros in data to show zero inflation
+# temp2 <- expdat[,5:12]
+# temp2 <- data.frame(value=unlist(temp2, use.names = FALSE))
+# count_zero <- temp2[temp2 == 0]
+# percent_zero <- length(count_zero) / nrow(temp2); percent_zero * 100
+# hist(temp2$value, main = "Zero inflated data", xlab = "Percent compartment use",
+#           breaks = c(0,seq(0.01,1.0,.01)))
+
 
 # Find and replace zero numerator or denominator with small value
   # As a zero numerator or denominator in the log-ratio transformation is invalid, a small positive value, 
@@ -161,7 +165,7 @@ TEST <- -ncol(CM_non) * log(det(H2MAT) / det(H1MAT)); TEST;
 # By default, pchisq() gives the proportion of the distribution to the left of the value.
 # To get the proportion more extreme than your difference, you can specify lower.tail = FALSE or subtract the result from 1.
 # Used to compute cumulative chi square density for a vector of elements
-# If significant (p<0.05), evidence for non-random use (null - no preference;  alternative - preference)
+# If significant (p <.05), evidence for non-random use (null - no preference;  alternative - preference)
 1 - pchisq(TEST, df = 4);
 
 rm(list=setdiff(ls(), c("prop_dat"))) # remove variables
@@ -176,7 +180,6 @@ data_phase <- as_tibble(prop_dat) %>%
   filter(phase != "I") 
 
 # Conduct MANOVA although multivariate normality assumption is not met
-#summary(manova(cbind(LRA1, LRA2, LRA3, LRA4) ~ treatment +  Error(factor(subject) / treatment), data = data_phase))
 summary(manova(cbind(LRA1, LRA2, LRA3, LRA4) ~ phase, data = data_phase))
 
 # Conduct Permutation test so we can ignore MANOVA assumptions 
@@ -209,8 +212,8 @@ res[nperm+1] <- obs <- tmp[["stats"]][1, 2]
 
 # This is the permutation p-value - the proportion of the nperm
 # permutations + 1 that are greater than or equal to the observed stat 'obs'
-# perm_p_value <- sum(res <= obs) / (nperm+1); perm_p_value
-# obs_p_value <- tmp[["Error: factor(subject):treatment"]][["stats"]][1,6]; obs_p_value
+# perm_p_value <- sum(res <= obs) / (nperm + 1); perm_p_value
+# obs_p_value <- tmp[["Error: factor(subject):treatment"]][["stats"]][1, 6]; obs_p_value
 perm_p_value <- 2 * (min(sum(res <= obs), sum(res >= obs)) / (nperm+1)); perm_p_value # 2 tailed
 obs_p_value <- tmp[["stats"]][1, 6]; obs_p_value
 
@@ -226,8 +229,8 @@ rm(list=setdiff(ls(), "prop_dat"))
 # and availability of temperature zones, and counting the number of times a particular temperature zone
 # has been observed to be preferred over other temperature zones (e.g. see table 1 in Aebischer et al. 1993)
 
-# Subset for non-gradient, acute, or final proportions; choose (I,II,III) accordingly 
-exp_data <- subset(prop_dat, phase == "II")
+# Subset for non-gradient, acute, or final proportions; choose (I, II, III) accordingly 
+exp_data <- subset(prop_dat, phase == "III")
 
 # Proportion of available space per compartment and temperature 
 c1 <- 1/8 # C1: 33 degrees: compartment 4
@@ -305,7 +308,7 @@ colnames(rank_mat_mean) <- c("22*C", "19*C", "16*C", "13*C", "10*C", "Rankings")
 rank_mat_mean
 
 # Test for normality: Shapiro-Wilk's method
-# p value > 0.05 implies distribution of data is not significantly different from normal distribution (i.e. normally distributed).
+# p value >.05 implies distribution of data is not significantly different from normal distribution (i.e. normally distributed).
 test_norm_mean <- c(rank_mat_mean[1, c(2:5)], rank_mat_mean[2, c(3:5)], rank_mat_mean[3, c(4:5)], rank_mat_mean[4, c(5)])
 test_norm_se <- c(rank_mat_se[1, c(2:5)], rank_mat_se[2, c(3:5)], rank_mat_se[3, c(4:5)], rank_mat_se[4, c(5)])
 
@@ -314,7 +317,6 @@ shapiro.test(test_norm_se)
 
 # Test significance between compartments ####
 # Subset of non-gradient, acute, or final proportions; choose (I,II,III) accordingly
-#rank_data <- subset(prop_dat, phase == "I" & treatment == "5") 
 rank_data <- exp_data # Same subset as line 255 to reduce any potential mistakes
 
 # Clear space in environment
