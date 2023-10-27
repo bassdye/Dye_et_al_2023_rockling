@@ -1,6 +1,7 @@
 # Dye_et_al_2023_rockling
 R script to statistically analyze (i.e. reproduce results from Dye et al. 2023) the compartmental usage of the five bearded rockling within an experimental water temperature preference chamber.
-1. 
+- rockling_temperature_preference.R - Statistically analyze the data for non random use of the preference chamber, conduct MANOVA to test for differences in compartment usage during the different observational phases, rank the temperature compartments (i.e. most preferred to least preferred), and statistically test the preference rankings.
+- rockling_shelter_preference.R - Statistically analyze the data for differences in compartment usage (i.e. temperature preference) during physical structure removals (Please see publication sections for further information: 2.3. Experimental protocol and 3.3 Trade-off between temperature and structure).
 
 ## Dye et al. 2023 publication 
 A rockling’s choice: the trade-off between thermal preference and physical structure in the five bearded rockling, _Ciliata mustela_.
