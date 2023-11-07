@@ -7,7 +7,8 @@ RStudio project to statistically analyze (i.e. reproduce results from Dye et al.
 A rockling’s choice: the trade-off between thermal preference and physical structure in the five bearded rockling, _Ciliata mustela_.
 
 Peer reviewed publication: https://doi.org/10.1016/j.jembe.2023.151959
-- Abstract
+
+Abstract
 > Changes in the environment can alter the suitability of habitats for organisms. In marine systems, fish species
 have their own specific requirements in terms of temperature and other habitat features. Behavioral responses
 such as thermoregulatory behavior in ectothermic species allow mobile organisms to respond to detrimental
