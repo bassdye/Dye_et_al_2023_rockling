@@ -9,7 +9,8 @@ A rockling’s choice: the trade-off between thermal preference and physical str
 Peer reviewed publication: https://doi.org/10.1016/j.jembe.2023.151959
 
 Abstract
-```
+
+`
 Changes in the environment can alter the suitability of habitats for organisms. In marine systems, fish species
 have their own specific requirements in terms of temperature and other habitat features. Behavioral responses
 such as thermoregulatory behavior in ectothermic species allow mobile organisms to respond to detrimental
@@ -31,4 +32,4 @@ Sea: 1) mean annual temperatures have been steadily increasing towards rockling'
 and 2) increasing mussel and Pacific oyster beds are plausibly providing structural habitat, an important habitat
 requirement for rockling. When fish display a strong association with physical structure it is necessary to link
 physiological and habitat preferences to better understand climate change related responses.
-```
+`
