@@ -24,7 +24,7 @@ is increasing within a changing Wadden Sea, a water temperature preference chamb
 rockling's preferred temperature range. In addition, rockling's affinity for structural habitat and the tradeoff
 between preferred temperature was examined by following their response to the systematic removal of artificial
 physical structures within the preferred temperature conditions. The preferred temperature range of rockling
-was found to be 10.4–15.7 °C. Following structure removals, rockling repeatedly moved away from their chosen
+was found to be 10.4–15.7°C. Following structure removals, rockling repeatedly moved away from their chosen
 temperatures to adjacent compartments with different temperatures but containing physical structure, indicating
 that the presence of physical structure was more important than preferred temperature until 18.6 °C. These novel
 findings provide insight and experimental support for the hypothesis explaining rockling's increase in the Wadden
